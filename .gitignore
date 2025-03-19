@@ -1,0 +1,17 @@
+# Docker
+*.log
+.env
+docker-compose.override.yml
+.dockerenv
+
+# Docker Compose
+.docker-compose/
+
+# Docker build artifacts and volumes
+/build/
+/volumes/
+
+# Sensitive data
+*.key
+*.pem
+*.crt

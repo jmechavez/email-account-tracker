@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:15  # Use the desired PostgreSQL version
+    container_name: postgres-email_dir
+    restart: always
+    environment:
+      POSTGRES_USER: admin           # Admin username
+      POSTGRES_PASSWORD: Admin123    # Admin password
+      POSTGRES_DB: email_dir         # Default database to create
+    ports:
+      - "5432:5432"                  # Expose PostgreSQL port
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - /mnt/d/code/email-account-tracker/infrastructure/db/postressql/user.sql:/docker-entrypoint-initdb.d/database.sql:ro # Mount the SQL script
+
+volumes:
+  postgres_data:
+    driver: local
+
+
+
