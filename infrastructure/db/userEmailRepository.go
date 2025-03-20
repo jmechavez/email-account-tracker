@@ -24,6 +24,15 @@ func (r UserEmailRepository) Users() ([]domain.User, *errors.AppError) {
 	return users, nil
 }
 
+func (r UserEmailRepository) IdNo(idNo string) (*domain.User, *errors.AppError) {
+	var user domain.User
+	err := r.emailDB.Get(&user, "SELECT * FROM users WHERE id_no = $1", idNo)
+	if err != nil {
+		return nil, errors.NewNotFoundError("User not found")
+	}
+	return &user, nil
+}
+
 func NewUserRepositoryDb(db *sqlx.DB) UserEmailRepository {
 	return UserEmailRepository{db}
 }

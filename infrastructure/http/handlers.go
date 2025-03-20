@@ -11,13 +11,39 @@ type UserHandler struct {
 	service services.UserService
 }
 
-func (h UserHandler) Users(w http.ResponseWriter, r *http.Request) {
-	users, err := h.service.User()
-	if err != nil {
-		writeResponse(w, err.Code, err.AsMessage())
+// func (h UserHandler) Users(w http.ResponseWriter, r *http.Request) {
+// 	users, err := h.service.Users()
+// 	if err != nil {
+// 		writeResponse(w, err.Code, err.AsMessage())
+// 		return
+// 	}
+// 	writeResponse(w, http.StatusOK, users)
+// }
+
+
+func (h UserHandler) IdNo(w http.ResponseWriter, r *http.Request) {
+	idNo := r.URL.Query().Get("id_no")
+	if idNo == "" {
+		idNo = r.URL.Query().Get("id")
+	}
+
+	if idNo != "" {
+		user, err := h.service.IdNo(idNo)
+		if err != nil {
+			writeResponse(w, err.Code, err.AsMessage())
+			return
+		}
+		writeResponse(w, http.StatusOK, user)
 		return
 	}
-	writeResponse(w, http.StatusOK, users)
+	{
+		users, err := h.service.Users()
+		if err != nil {
+			writeResponse(w, err.Code, err.AsMessage())
+			return
+		}
+		writeResponse(w, http.StatusOK, users)
+	}
 }
 
 func writeResponse(w http.ResponseWriter, code int, data interface{}) {

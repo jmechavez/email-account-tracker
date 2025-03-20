@@ -22,7 +22,7 @@ func Start() {
 		services.NewUserService(db.NewUserRepositoryDb(dbUser)),
 	}
 
-	router.HandleFunc("/users", uh.Users).Methods(http.MethodGet)
+	router.HandleFunc("/users", uh.IdNo).Methods(http.MethodGet)
 	// Set CORS options
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}), // Change this to specific origins if needed
