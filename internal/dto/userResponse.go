@@ -41,3 +41,16 @@ type UserIdNoEmailResponse struct {
 	UpdatedBy      string `json:"updated_by"`
 	DeletedBy      string `json:"deleted_by"`
 }
+
+type UserCreateResponse struct {
+	IdNo        string `json:"id_no"`
+	Department  string `json:"department"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	Email       string `json:"email"`
+	EmailStatus string `json:"email_status"`
+	Status      string `json:"status"`
+	TicketNo    string `json:"ticket_no"`
+	DateCreated string `json:"date_created"`
+	CreatedBy   string `json:"created_by"`
+}

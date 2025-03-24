@@ -28,6 +28,13 @@ type User struct {
 	DeletedBy      string `json:"deleted_by" db:"deleted_by"`
 }
 
+type UserCreateReturn struct {
+	IdNo      string `json:"id_no" db:"id_no"`
+	FirstName string `json:"first_name" db:"first_name"`
+	LastName  string `json:"last_name" db:"last_name"`
+	Email     string `json:"email" db:"email"`
+}
+
 func (u User) ToDto() dto.UserEmailResponse {
 	return dto.UserEmailResponse{
 		IdNo:       u.IdNo,
@@ -60,7 +67,32 @@ func (u User) ToIdDto() dto.UserIdNoEmailResponse {
 	}
 }
 
+func (u User) ToNewUserDto() dto.UserCreateResponse {
+	return dto.UserCreateResponse{
+		IdNo:        u.IdNo,
+		Department:  u.Department,
+		FirstName:   u.FirstName,
+		LastName:    u.LastName,
+		Email:       u.Email,
+		EmailStatus: u.EmailStatus,
+		Status:      u.Status,
+		TicketNo:    u.TicketNo,
+		DateCreated: u.DateCreated,
+		CreatedBy:   u.CreatedBy,
+	}
+}
+
+func (u User) ToUserCreateReturn() UserCreateReturn {
+	return UserCreateReturn{
+		IdNo:      u.IdNo,
+		FirstName: u.FirstName,
+		LastName:  u.LastName,
+		Email:     u.Email,
+	}
+}
+
 type UserRepository interface {
 	Users() ([]User, *errors.AppError)
 	IdNo(string) (*User, *errors.AppError)
+	CreateUser(User) (*UserCreateReturn, *errors.AppError) // Changed return type here
 }

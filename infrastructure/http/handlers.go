@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gorilla/mux"
+	"github.com/jmechavez/email-account-tracker/internal/dto"
 	"github.com/jmechavez/email-account-tracker/internal/ports/services"
 )
 
@@ -19,7 +21,6 @@ type UserHandler struct {
 // 	}
 // 	writeResponse(w, http.StatusOK, users)
 // }
-
 
 func (h UserHandler) IdNo(w http.ResponseWriter, r *http.Request) {
 	idNo := r.URL.Query().Get("id_no")
@@ -43,6 +44,25 @@ func (h UserHandler) IdNo(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		writeResponse(w, http.StatusOK, users)
+	}
+}
+
+func (h UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idNo := vars["id_no"]
+	var req dto.UserEmailRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		writeResponse(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	} else {
+		req.IdNo = idNo
+		user, err := h.service.CreateUser(req)
+		if err != nil {
+			writeResponse(w, err.Code, err.AsMessage())
+			return
+		}
+		writeResponse(w, http.StatusCreated, user)
 	}
 }
 
