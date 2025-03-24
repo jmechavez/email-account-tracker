@@ -98,16 +98,15 @@ func (s DefaultUserService) CreateUser(req dto.UserEmailRequest) (*dto.UserCreat
 	return &response, nil
 }
 
-// generateEmail creates the email address from first name, last name, and suffix.
 func (s DefaultUserService) generateEmail(firstName, lastName, suffix string) (string, *errors.AppError) {
-	// 1. Normalize the names (lowercase, remove spaces, etc.)
+	// 1. Normalize the names (lowercase, remove spaces, remove dots)
 	normalizedFirstName := strings.ToLower(strings.ReplaceAll(firstName, " ", ""))
 	normalizedLastName := strings.ToLower(strings.ReplaceAll(lastName, " ", ""))
 
 	// 2. Handle the suffix (if any)
 	suffixPart := ""
 	if suffix != "" {
-		suffixPart = strings.ToLower(strings.ReplaceAll(suffix, " ", "")) + "."
+		suffixPart = strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(suffix, " ", ""), ".", ""))
 	}
 
 	// 3. Construct the email address
