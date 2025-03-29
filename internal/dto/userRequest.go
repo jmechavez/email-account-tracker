@@ -13,3 +13,9 @@ type UserEmailRequest struct {
 	ProfilePicture string `json:"profile_picture" db:"profile_picture"`
 	CreatedBy      string `json:"created_by" db:"created_by"`
 }
+
+type UserEmailDeleteRequest struct {
+	IdNo            string `json:"id_no" db:"id_no"`	
+	DeletedTicketNo string `json:"deleted_ticket_no" db:"deleted_ticket_no"`
+	DeletedBy       string `json:"deleted_by" db:"deleted_by"`
+}

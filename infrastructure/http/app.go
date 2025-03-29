@@ -24,6 +24,9 @@ func Start() {
 
 	router.HandleFunc("/users", uh.IdNo).Methods(http.MethodGet)
 	router.HandleFunc("/users/{id_no}", uh.CreateUser).Methods(http.MethodPost)
+
+	router.HandleFunc("/users/{id_no}", uh.DeleteUser).Methods(http.MethodDelete)
+	
 	// Set CORS options
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}), // Change this to specific origins if needed

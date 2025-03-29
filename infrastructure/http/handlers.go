@@ -66,6 +66,25 @@ func (h UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idNo := vars["id_no"]
+	var req dto.UserEmailDeleteRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		writeResponse(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	} else {
+		req.IdNo = idNo
+		user, err := h.service.DeleteUser(req)
+		if err != nil {
+			writeResponse(w, err.Code, err.AsMessage())
+			return
+		}
+		writeResponse(w, http.StatusCreated, user)
+	}
+}
+
 func writeResponse(w http.ResponseWriter, code int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*") // Allow frontend

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"log"
 
 	"github.com/jmechavez/email-account-tracker/errors"
@@ -46,7 +47,7 @@ func (r UserEmailRepository) CreateUser(user domain.User) (*domain.UserCreateRet
                     :salt, :smtp_email, :smtp_password,
                     NOW(), NOW(), :created_by, :updated_by
             )
-			RETURNING id_no, first_name, last_name, email
+            RETURNING id_no, first_name, last_name, suffix, email
     `
 
 	// Use NamedQuery for named parameters with structs
@@ -70,6 +71,35 @@ func (r UserEmailRepository) CreateUser(user domain.User) (*domain.UserCreateRet
 	}
 
 	return &userReturn, nil
+}
+func (r UserEmailRepository) DeleteUser(user domain.User) (*domain.UserDeleteReturn, *errors.AppError) {
+	deleteUserSql := `
+		UPDATE users
+		SET
+			status = 'deleted',
+			email_status = 'deleted',
+			deleted_ticket_no = $2,
+			deleted_by = $3,
+			date_deleted = CURRENT_TIMESTAMP
+		WHERE id_no = $1 AND status != 'deleted'
+		RETURNING id_no, status, email_status
+	`
+	var u domain.UserDeleteReturn
+	err := r.emailDB.QueryRow(
+		deleteUserSql,
+		user.IdNo,
+		user.DeletedTicketNo.String,
+		user.DeletedBy.String,
+	).Scan(&u.IdNo, &u.Status, &u.EmailStatus)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.NewNotFoundError("User not found or already deleted")
+		}
+		return nil, errors.NewUnExpectedError("Database error during user deletion: " + err.Error())
+	}
+
+	return &u, nil
 }
 
 func NewUserRepositoryDb(db *sqlx.DB) UserEmailRepository {

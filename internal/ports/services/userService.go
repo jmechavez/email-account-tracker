@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ type UserService interface {
 	Users() ([]dto.UserEmailResponse, *errors.AppError)
 	IdNo(idNo string) (*dto.UserIdNoEmailResponse, *errors.AppError)
 	CreateUser(user dto.UserEmailRequest) (*dto.UserCreateResponse, *errors.AppError)
+	DeleteUser(user dto.UserEmailDeleteRequest) (*dto.UserEmailDeleteResponse, *errors.AppError)
 }
 
 type DefaultUserService struct {
@@ -68,10 +70,10 @@ func (s DefaultUserService) CreateUser(req dto.UserEmailRequest) (*dto.UserCreat
 		Email:          email,
 		EmailStatus:    "active",
 		Status:         req.Status,
-		TicketNo:       req.TicketNo,
+		TicketNo:       sql.NullString{String: req.TicketNo, Valid: req.TicketNo != ""},
 		ProfilePicture: "n/a",
-		DateCreated:    time.Now().Format("2006-01-02 15:04:05"),
-		DateUpdated:    time.Now().Format("2006-01-02 15:04:05"),
+		DateCreated:    sql.NullString{String: time.Now().Format("2006-01-02 15:04:05"), Valid: true},
+		DateUpdated:    sql.NullString{String: time.Now().Format("2006-01-02 15:04:05"), Valid: true},
 		CreatedBy:      "admin",
 		UpdatedBy:      "admin",
 	}
@@ -87,14 +89,40 @@ func (s DefaultUserService) CreateUser(req dto.UserEmailRequest) (*dto.UserCreat
 		Department:  user.Department,
 		FirstName:   newUser.FirstName,
 		LastName:    newUser.LastName,
+		Suffix:      newUser.Suffix,
 		Email:       newUser.Email,
 		EmailStatus: user.EmailStatus,
 		Status:      user.Status,
-		TicketNo:    user.TicketNo,
-		DateCreated: user.DateCreated,
+		TicketNo:    user.TicketNo.String,
+		DateCreated: user.DateCreated.String,
 		CreatedBy:   user.CreatedBy,
 	}
 
+	return &response, nil
+}
+
+func (s DefaultUserService) DeleteUser(req dto.UserEmailDeleteRequest) (*dto.UserEmailDeleteResponse, *errors.AppError) {
+	user := domain.User{
+	IdNo:            req.IdNo,
+		DeletedBy:       sql.NullString{String: "admin", Valid: true},
+		DateDeleted:     sql.NullString{
+			String: time.Now().Format(time.RFC3339),
+			Valid: true,
+		},
+		DeletedTicketNo: sql.NullString{String: req.DeletedTicketNo, Valid: req.DeletedTicketNo != ""},
+		EmailStatus:     "deleted",
+	}
+
+	deletedUser, err := s.repo.DeleteUser(user)
+	if err != nil {
+		return nil, err
+	}
+
+	response := dto.UserEmailDeleteResponse{
+		IdNo:        deletedUser.IdNo,
+		EmailStatus: deletedUser.EmailStatus,
+		Status:      deletedUser.Status,
+	}
 	return &response, nil
 }
 
