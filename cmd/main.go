@@ -6,6 +6,9 @@ import (
 )
 
 func main() {
+	logger.Initialize()
+	defer logger.Sync()
+
 	logger.Info("Starting the application")
 	http.Start()
 }

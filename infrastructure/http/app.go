@@ -7,16 +7,17 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jmechavez/email-account-tracker/infrastructure/db"
+	"github.com/jmechavez/email-account-tracker/infrastructure/logger"
 	"github.com/jmechavez/email-account-tracker/internal/ports/services"
 	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 )
 
 func Start() {
+	logger.Info("Starting the HTTP server on localhost:8000")
+
 	router := mux.NewRouter()
-
 	dbUser := getPostgresDB()
-
-	//UserRepositorydb := db.NewUserRepositoryDb(dbUser)
 
 	uh := UserHandler{
 		services.NewUserService(db.NewUserRepositoryDb(dbUser)),
@@ -24,32 +25,26 @@ func Start() {
 
 	router.HandleFunc("/users", uh.IdNo).Methods(http.MethodGet)
 	router.HandleFunc("/users/{id_no}", uh.CreateUser).Methods(http.MethodPost)
-
 	router.HandleFunc("/users/{id_no}", uh.DeleteUser).Methods(http.MethodDelete)
-	
-	// Set CORS options
+	router.HandleFunc("/users/{id_no}", uh.UpdateUser).Methods(http.MethodPatch)
+
 	corsHandler := handlers.CORS(
-		handlers.AllowedOrigins([]string{"*"}), // Change this to specific origins if needed
-		handlers.AllowedMethods(
-			[]string{
-				http.MethodGet,
-				http.MethodPost,
-				http.MethodPut,
-				http.MethodDelete,
-				http.MethodOptions,
-			},
-		),
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedMethods([]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions}),
 		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
 	)
 
+	logger.Info("HTTP server is ready to accept requests")
 	log.Fatal(http.ListenAndServe("localhost:8000", corsHandler(router)))
 }
 
 func getPostgresDB() *sqlx.DB {
+	logger.Info("Connecting to PostgreSQL database")
 	connStr := "user=admin password=Admin123 dbname=email_dir sslmode=disable"
 	userDb, err := sqlx.Open("postgres", connStr)
 	if err != nil {
-		panic(err)
+		logger.Fatal("Failed to connect to PostgreSQL database", zap.Error(err))
 	}
+	logger.Info("Successfully connected to PostgreSQL database")
 	return userDb
 }

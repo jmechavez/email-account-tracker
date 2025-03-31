@@ -65,3 +65,18 @@ type UserEmailDeleteResponse struct {
 	EmailStatus string `json:"email_status"`
 	Status      string `json:"status"`
 }
+
+type UserUpdateResponse struct {
+	IdNo            string `json:"id_no"`
+	Department      string `json:"department"`
+	FirstName       string `json:"first_name"`
+	LastName        string `json:"last_name"`
+	Suffix          string `json:"suffix,omitempty"`
+	Email           string `json:"email"`
+	EmailStatus     string `json:"email_status"`
+	Status          string `json:"status"`
+	UpdatedTicketNo string `json:"updated_ticket_no,omitempty"`
+	ProfilePicture  string `json:"profile_picture,omitempty"`
+	DateUpdated     string `json:"date_updated"`
+	UpdatedBy       string `json:"updated_by"`
+}

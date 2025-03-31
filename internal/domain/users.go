@@ -105,6 +105,23 @@ func (u User) ToNewUserDto() dto.UserCreateResponse {
 	}
 }
 
+func (u User) ToUpdateDto() dto.UserUpdateResponse {
+	return dto.UserUpdateResponse{
+		IdNo:            u.IdNo,
+		Department:      u.Department,
+		FirstName:       u.FirstName,
+		LastName:        u.LastName,
+		Suffix:          u.Suffix,
+		Email:           u.Email,
+		EmailStatus:     u.EmailStatus,
+		Status:          u.Status,
+		UpdatedTicketNo: u.UpdatedTicketNo.String,
+		ProfilePicture:  u.ProfilePicture,
+		DateUpdated:     u.DateUpdated.String,
+		UpdatedBy:       u.UpdatedBy,
+	}
+}
+
 func (u User) ToUserCreateReturn() UserCreateReturn {
 	return UserCreateReturn{
 		IdNo:      u.IdNo,
@@ -119,4 +136,5 @@ type UserRepository interface {
 	IdNo(string) (*User, *errors.AppError)
 	CreateUser(User) (*UserCreateReturn, *errors.AppError)
 	DeleteUser(User) (*UserDeleteReturn, *errors.AppError)
+	UpdateUser(User) (*User, *errors.AppError)
 }

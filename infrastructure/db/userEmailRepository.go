@@ -2,13 +2,13 @@ package db
 
 import (
 	"database/sql"
-	"log"
 
 	"github.com/jmechavez/email-account-tracker/errors"
 	"github.com/jmechavez/email-account-tracker/infrastructure/logger"
 	"github.com/jmechavez/email-account-tracker/internal/domain"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
 type UserEmailRepository struct {
@@ -16,26 +16,35 @@ type UserEmailRepository struct {
 }
 
 func (r UserEmailRepository) Users() ([]domain.User, *errors.AppError) {
+	logger.Info("Fetching all users from the database")
 	var users []domain.User
 	err := r.emailDB.Select(&users, "SELECT * FROM users")
 	if err != nil {
-		// Log the actual database error
-		log.Println("Database error:", err)
+		logger.Error("Database error while fetching users", zap.Error(err))
 		return nil, errors.NewUnExpectedError("Unexpected database error")
 	}
+	logger.Info("Successfully fetched users", zap.Int("count", len(users)))
 	return users, nil
 }
 
 func (r UserEmailRepository) IdNo(idNo string) (*domain.User, *errors.AppError) {
+	logger.Info("Fetching user by ID", zap.String("id_no", idNo))
 	var user domain.User
 	err := r.emailDB.Get(&user, "SELECT * FROM users WHERE id_no = $1", idNo)
 	if err != nil {
-		return nil, errors.NewNotFoundError("User not found")
+		if err == sql.ErrNoRows {
+			logger.Warn("User not found", zap.String("id_no", idNo))
+			return nil, errors.NewNotFoundError("User not found")
+		}
+		logger.Error("Database error while fetching user by ID", zap.Error(err))
+		return nil, errors.NewUnExpectedError("Unexpected database error")
 	}
+	logger.Info("Successfully fetched user", zap.String("id_no", idNo))
 	return &user, nil
 }
 
 func (r UserEmailRepository) CreateUser(user domain.User) (*domain.UserCreateReturn, *errors.AppError) {
+	logger.Info("Creating a new user", zap.String("id_no", user.IdNo))
 	createUserSql := `
             INSERT INTO users (
                     id_no, department, first_name, last_name, suffix, email,
@@ -50,10 +59,9 @@ func (r UserEmailRepository) CreateUser(user domain.User) (*domain.UserCreateRet
             RETURNING id_no, first_name, last_name, suffix, email
     `
 
-	// Use NamedQuery for named parameters with structs
 	rows, err := r.emailDB.NamedQuery(createUserSql, user)
 	if err != nil {
-		logger.Error("Error while creating user: " + err.Error())
+		logger.Error("Error while creating user", zap.Error(err))
 		return nil, errors.NewUnExpectedError("Unexpected database error")
 	}
 	defer rows.Close()
@@ -62,7 +70,7 @@ func (r UserEmailRepository) CreateUser(user domain.User) (*domain.UserCreateRet
 	if rows.Next() {
 		err = rows.StructScan(&userReturn)
 		if err != nil {
-			logger.Error("Error scanning user return: " + err.Error())
+			logger.Error("Error scanning user return", zap.Error(err))
 			return nil, errors.NewUnExpectedError("Unexpected database error")
 		}
 	} else {
@@ -70,9 +78,12 @@ func (r UserEmailRepository) CreateUser(user domain.User) (*domain.UserCreateRet
 		return nil, errors.NewUnExpectedError("User creation failed")
 	}
 
+	logger.Info("User created successfully", zap.String("id_no", userReturn.IdNo))
 	return &userReturn, nil
 }
+
 func (r UserEmailRepository) DeleteUser(user domain.User) (*domain.UserDeleteReturn, *errors.AppError) {
+	logger.Info("Deleting user", zap.String("id_no", user.IdNo))
 	deleteUserSql := `
 		UPDATE users
 		SET
@@ -94,14 +105,60 @@ func (r UserEmailRepository) DeleteUser(user domain.User) (*domain.UserDeleteRet
 
 	if err != nil {
 		if err == sql.ErrNoRows {
+			logger.Warn("User not found or already deleted", zap.String("id_no", user.IdNo))
 			return nil, errors.NewNotFoundError("User not found or already deleted")
 		}
-		return nil, errors.NewUnExpectedError("Database error during user deletion: " + err.Error())
+		logger.Error("Database error during user deletion", zap.Error(err))
+		return nil, errors.NewUnExpectedError("Database error during user deletion")
 	}
 
+	logger.Info("User deleted successfully", zap.String("id_no", u.IdNo))
 	return &u, nil
 }
 
+func (r UserEmailRepository) UpdateUser(user domain.User) (*domain.User, *errors.AppError) {
+	logger.Info("Updating user", zap.String("id_no", user.IdNo))
+	updateUserSql := `
+        UPDATE users
+        SET
+            department = CASE WHEN :department = '' THEN department ELSE :department END,
+            first_name = CASE WHEN :first_name = '' THEN first_name ELSE :first_name END,
+            last_name = CASE WHEN :last_name = '' THEN last_name ELSE :last_name END,
+            suffix = CASE WHEN :suffix = '' THEN suffix ELSE :suffix END,
+            email = CASE WHEN :email = '' THEN email ELSE :email END,
+            email_status = CASE WHEN :email_status = '' THEN email_status ELSE :email_status END,
+            status = CASE WHEN :status = '' THEN status ELSE :status END,
+            ticket_no = CASE WHEN :ticket_no = '' THEN ticket_no ELSE :ticket_no END,
+            profile_picture = CASE WHEN :profile_picture = '' THEN profile_picture ELSE :profile_picture END,
+            updated_by = :updated_by,
+            date_updated = CURRENT_TIMESTAMP
+        WHERE id_no = :id_no
+        RETURNING *
+    `
+	rows, err := r.emailDB.NamedQuery(updateUserSql, user)
+	if err != nil {
+		logger.Error("Error while updating user", zap.Error(err))
+		return nil, errors.NewUnExpectedError("Unexpected database error")
+	}
+	defer rows.Close()
+
+	var updatedUser domain.User
+	if rows.Next() {
+		err = rows.StructScan(&updatedUser)
+		if err != nil {
+			logger.Error("Error scanning updated user", zap.Error(err))
+			return nil, errors.NewUnExpectedError("Unexpected database error")
+		}
+	} else {
+		logger.Error("No rows returned after update")
+		return nil, errors.NewUnExpectedError("User update failed")
+	}
+
+	logger.Info("User updated successfully", zap.String("id_no", updatedUser.IdNo))
+	return &updatedUser, nil
+}
+
 func NewUserRepositoryDb(db *sqlx.DB) UserEmailRepository {
+	logger.Info("Initializing UserEmailRepository")
 	return UserEmailRepository{db}
 }

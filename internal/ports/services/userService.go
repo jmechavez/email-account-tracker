@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ type UserService interface {
 	IdNo(idNo string) (*dto.UserIdNoEmailResponse, *errors.AppError)
 	CreateUser(user dto.UserEmailRequest) (*dto.UserCreateResponse, *errors.AppError)
 	DeleteUser(user dto.UserEmailDeleteRequest) (*dto.UserEmailDeleteResponse, *errors.AppError)
+	UpdateUser(user dto.UserUpdateRequest) (*dto.UserUpdateResponse, *errors.AppError)
 }
 
 type DefaultUserService struct {
@@ -83,6 +85,8 @@ func (s DefaultUserService) CreateUser(req dto.UserEmailRequest) (*dto.UserCreat
 		return nil, err
 	}
 
+	log.Printf("User with ID %s created successfully", newUser.IdNo)
+
 	// Create a response using the data from newUser and original user
 	response := dto.UserCreateResponse{
 		IdNo:        newUser.IdNo,
@@ -103,11 +107,11 @@ func (s DefaultUserService) CreateUser(req dto.UserEmailRequest) (*dto.UserCreat
 
 func (s DefaultUserService) DeleteUser(req dto.UserEmailDeleteRequest) (*dto.UserEmailDeleteResponse, *errors.AppError) {
 	user := domain.User{
-	IdNo:            req.IdNo,
-		DeletedBy:       sql.NullString{String: "admin", Valid: true},
-		DateDeleted:     sql.NullString{
+		IdNo:      req.IdNo,
+		DeletedBy: sql.NullString{String: "admin", Valid: true},
+		DateDeleted: sql.NullString{
 			String: time.Now().Format(time.RFC3339),
-			Valid: true,
+			Valid:  true,
 		},
 		DeletedTicketNo: sql.NullString{String: req.DeletedTicketNo, Valid: req.DeletedTicketNo != ""},
 		EmailStatus:     "deleted",
@@ -124,6 +128,60 @@ func (s DefaultUserService) DeleteUser(req dto.UserEmailDeleteRequest) (*dto.Use
 		Status:      deletedUser.Status,
 	}
 	return &response, nil
+}
+
+func (s DefaultUserService) UpdateUser(req dto.UserUpdateRequest) (*dto.UserUpdateResponse, *errors.AppError) {
+	// First, get the existing user
+	existingUser, err := s.repo.IdNo(req.IdNo)
+	if err != nil {
+		return nil, err
+	}
+
+	// Start with the existing user data
+	user := *existingUser
+
+	// Only update fields that are provided
+	if req.Department != "" {
+		user.Department = req.Department
+	}
+	if req.FirstName != "" {
+		user.FirstName = req.FirstName
+	}
+	if req.LastName != "" {
+		user.LastName = req.LastName
+	}
+	if req.Suffix != "" {
+		user.Suffix = req.Suffix
+	}
+	if req.Email != "" {
+		user.Email = req.Email
+	}
+	if req.EmailStatus != "" {
+		user.EmailStatus = req.EmailStatus
+	}
+	if req.Status != "" {
+		user.Status = req.Status
+	}
+	if req.UpdatedTicketNo != "" {
+		user.UpdatedTicketNo = sql.NullString{String: req.UpdatedTicketNo, Valid: true}
+	}
+	if req.ProfilePicture != "" {
+		user.ProfilePicture = req.ProfilePicture
+	}
+
+	// These fields are always updated
+	user.UpdatedBy = req.UpdatedBy
+
+	// Call the repository
+	updatedUser, err := s.repo.UpdateUser(user)
+	if err != nil {
+		return nil, err
+	}
+
+	response := updatedUser.ToUpdateDto()
+
+	return &response, nil
+
 }
 
 func (s DefaultUserService) generateEmail(firstName, lastName, suffix string) (string, *errors.AppError) {
