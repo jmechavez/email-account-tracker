@@ -19,6 +19,7 @@ type UserService interface {
 	CreateUser(user dto.UserEmailRequest) (*dto.UserCreateResponse, *errors.AppError)
 	DeleteUser(user dto.UserEmailDeleteRequest) (*dto.UserEmailDeleteResponse, *errors.AppError)
 	UpdateUser(user dto.UserUpdateRequest) (*dto.UserUpdateResponse, *errors.AppError)
+	UpdateSurname(user dto.UserUpdateSurnameRequest) (*dto.UserUpdateSurnameResponse, *errors.AppError)
 }
 
 type DefaultUserService struct {
@@ -127,6 +128,36 @@ func (s DefaultUserService) DeleteUser(req dto.UserEmailDeleteRequest) (*dto.Use
 		EmailStatus: deletedUser.EmailStatus,
 		Status:      deletedUser.Status,
 	}
+	return &response, nil
+}
+
+func (s DefaultUserService) UpdateSurname(req dto.UserUpdateSurnameRequest) (*dto.UserUpdateSurnameResponse, *errors.AppError) {
+	email, err := s.generateEmail(req.FirstName, req.LastName, req.Suffix)
+	if err != nil {
+		return nil, err // Assuming generateEmail returns *errors.AppError, adjust if needed.
+	}
+
+	// First, get the existing user
+	existingUser, err := s.repo.IdNo(req.IdNo)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the surname
+	existingUser.LastName = req.LastName
+	existingUser.Email = email
+	existingUser.UpdatedTicketNo = sql.NullString{String: req.UpdatedTicketNo, Valid: req.UpdatedTicketNo != ""}
+	existingUser.UpdatedBy = req.UpdatedBy
+	existingUser.DateUpdated = sql.NullString{String: time.Now().Format("2006-01-02 15:04:05"), Valid: true}
+
+	// Call the repository
+	updatedUser, err := s.repo.UpdateSurname(*existingUser)
+	if err != nil {
+		return nil, err
+	}
+
+	response := updatedUser.ToUpdateSurnameDto()
+
 	return &response, nil
 }
 

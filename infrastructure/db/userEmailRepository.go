@@ -158,6 +158,42 @@ func (r UserEmailRepository) UpdateUser(user domain.User) (*domain.User, *errors
 	return &updatedUser, nil
 }
 
+func (r UserEmailRepository) UpdateSurname(user domain.User) (*domain.User, *errors.AppError) {
+	logger.Info("Updating user surname", zap.String("id_no", user.IdNo))
+	updateSurnameSql := `
+		UPDATE users
+		SET
+			last_name = :last_name,
+			updated_ticket_no = :updated_ticket_no,
+			email = :email,
+			updated_by = :updated_by,
+			date_updated = CURRENT_TIMESTAMP
+		WHERE id_no = :id_no
+		RETURNING *
+	`
+	rows, err := r.emailDB.NamedQuery(updateSurnameSql, user)
+	if err != nil {
+		logger.Error("Error while updating surname", zap.Error(err))
+		return nil, errors.NewUnExpectedError("Unexpected database error")
+	}
+	defer rows.Close()
+
+	var updatedUser domain.User
+	if rows.Next() {
+		err = rows.StructScan(&updatedUser)
+		if err != nil {
+			logger.Error("Error scanning updated user", zap.Error(err))
+			return nil, errors.NewUnExpectedError("Unexpected database error")
+		}
+	} else {
+		logger.Error("No rows returned after surname update")
+		return nil, errors.NewUnExpectedError("Surname update failed")
+	}
+
+	logger.Info("User surname updated successfully", zap.String("id_no", updatedUser.IdNo))
+	return &updatedUser, nil
+}
+
 func NewUserRepositoryDb(db *sqlx.DB) UserEmailRepository {
 	logger.Info("Initializing UserEmailRepository")
 	return UserEmailRepository{db}

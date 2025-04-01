@@ -62,6 +62,43 @@ func (h UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	writeResponse(w, http.StatusOK, response)
 }
 
+func (h UserHandler) UpdateSurname(w http.ResponseWriter, r *http.Request) {
+	// Only allow PATCH method for updates
+	if r.Method != http.MethodPatch {
+		writeResponse(w, http.StatusMethodNotAllowed, errors.NewMethodNotAllowedError("Method not allowed"))
+		return
+	}
+
+	// Extract IdNo from URL path
+	vars := mux.Vars(r)
+	idNo := vars["id_no"]
+	if idNo == "" {
+		writeResponse(w, http.StatusBadRequest, errors.NewBadRequestError("ID number is required in the URL"))
+		return
+	}
+
+	// Parse the request body
+	var request dto.UserUpdateSurnameRequest
+		err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		writeResponse(w, http.StatusBadRequest, errors.NewBadRequestError("Invalid request body"))
+		return
+	}
+
+	// Assign the extracted IdNo to the request object
+	request.IdNo = idNo
+
+	// Call the service to update the user
+	response, appError := h.service.UpdateSurname(request)
+	if appError != nil {
+		writeResponse(w, appError.Code, appError)
+		return
+	}
+
+	// Return success response
+	writeResponse(w, http.StatusOK, response)
+}
+
 func (h UserHandler) IdNo(w http.ResponseWriter, r *http.Request) {
 	idNo := r.URL.Query().Get("id_no")
 	if idNo == "" {

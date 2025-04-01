@@ -20,6 +20,15 @@ type UserEmailDeleteRequest struct {
 	DeletedBy       string `json:"deleted_by" db:"deleted_by"`
 }
 
+type UserUpdateSurnameRequest struct {
+	IdNo            string `json:"id_no" db:"id_no"`
+	FirstName       string `json:"first_name" db:"first_name"`
+	LastName        string `json:"last_name" db:"last_name"`
+	Suffix          string `json:"suffix" db:"suffix"`
+	UpdatedTicketNo string `json:"updated_ticket_no" db:"updated_ticket_no"`
+	UpdatedBy       string `json:"updated_by" db:"updated_by"`
+}
+
 type UserUpdateRequest struct {
 	IdNo            string `json:"id_no" db:"id_no"`
 	Department      string `json:"department" db:"department"`

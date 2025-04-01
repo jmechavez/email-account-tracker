@@ -105,6 +105,15 @@ func (u User) ToNewUserDto() dto.UserCreateResponse {
 	}
 }
 
+func (u User) ToUpdateSurnameDto() dto.UserUpdateSurnameResponse {
+	return dto.UserUpdateSurnameResponse{
+		IdNo:      u.IdNo,
+		FirstName: u.FirstName,
+		LastName:  u.LastName,
+		Email:    u.Email,
+	}
+}
+
 func (u User) ToUpdateDto() dto.UserUpdateResponse {
 	return dto.UserUpdateResponse{
 		IdNo:            u.IdNo,
@@ -137,4 +146,5 @@ type UserRepository interface {
 	CreateUser(User) (*UserCreateReturn, *errors.AppError)
 	DeleteUser(User) (*UserDeleteReturn, *errors.AppError)
 	UpdateUser(User) (*User, *errors.AppError)
+	UpdateSurname(User) (*User, *errors.AppError)
 }

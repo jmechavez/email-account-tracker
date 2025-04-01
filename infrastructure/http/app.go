@@ -27,6 +27,7 @@ func Start() {
 	router.HandleFunc("/users/{id_no}", uh.CreateUser).Methods(http.MethodPost)
 	router.HandleFunc("/users/{id_no}", uh.DeleteUser).Methods(http.MethodDelete)
 	router.HandleFunc("/users/{id_no}", uh.UpdateUser).Methods(http.MethodPatch)
+	router.HandleFunc("/users/{id_no}/surname", uh.UpdateSurname).Methods(http.MethodPatch)
 
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),

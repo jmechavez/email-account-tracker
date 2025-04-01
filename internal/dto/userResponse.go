@@ -80,3 +80,11 @@ type UserUpdateResponse struct {
 	DateUpdated     string `json:"date_updated"`
 	UpdatedBy       string `json:"updated_by"`
 }
+
+type UserUpdateSurnameResponse struct {
+	IdNo            string `json:"id_no"`
+	FirstName       string `json:"first_name"`
+	LastName        string `json:"last_name"`
+	Suffix          string `json:"suffix,omitempty"`
+	Email           string `json:"email"`
+}
