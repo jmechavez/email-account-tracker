@@ -141,7 +141,7 @@ func (u User) ToUserCreateReturn() UserCreateReturn {
 }
 
 type UserRepository interface {
-	Users() ([]User, *errors.AppError)
+	Users(limit, offset int) ([]User, *errors.AppError)
 	IdNo(string) (*User, *errors.AppError)
 	CreateUser(User) (*UserCreateReturn, *errors.AppError)
 	DeleteUser(User) (*UserDeleteReturn, *errors.AppError)

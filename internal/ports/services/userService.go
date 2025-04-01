@@ -13,8 +13,8 @@ import (
 )
 
 type UserService interface {
-	UserNoDto() ([]domain.User, *errors.AppError)
-	Users() ([]dto.UserEmailResponse, *errors.AppError)
+	//UserNoDto() ([]domain.User, *errors.AppError)
+	Users(limit, offset int) ([]dto.UserEmailResponse, *errors.AppError)
 	IdNo(idNo string) (*dto.UserIdNoEmailResponse, *errors.AppError)
 	CreateUser(user dto.UserEmailRequest) (*dto.UserCreateResponse, *errors.AppError)
 	DeleteUser(user dto.UserEmailDeleteRequest) (*dto.UserEmailDeleteResponse, *errors.AppError)
@@ -27,17 +27,17 @@ type DefaultUserService struct {
 }
 
 // NoDto is used to return the User struct without the dto
-func (s DefaultUserService) UserNoDto() ([]domain.User, *errors.AppError) {
-	u, err := s.repo.Users()
-	if err != nil {
-		return nil, err
-	}
-	return u, nil
-}
+// func (s DefaultUserService) UserNoDto() ([]domain.User, *errors.AppError) {
+// 	u, err := s.repo.Users()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return u, nil
+// }
 
 // User is used to return the User struct with the dto
-func (s DefaultUserService) Users() ([]dto.UserEmailResponse, *errors.AppError) {
-	u, err := s.repo.Users()
+func (s DefaultUserService) Users(limit, offset int) ([]dto.UserEmailResponse, *errors.AppError) {
+	u, err := s.repo.Users(limit, offset)
 	if err != nil {
 		return nil, err
 	}

@@ -15,10 +15,12 @@ type UserEmailRepository struct {
 	emailDB *sqlx.DB
 }
 
-func (r UserEmailRepository) Users() ([]domain.User, *errors.AppError) {
-	logger.Info("Fetching all users from the database")
+func (r UserEmailRepository) Users(limit, offset int) ([]domain.User, *errors.AppError) {
+	logger.Info("Fetching users from the database with pagination", zap.Int("limit", limit), zap.Int("offset", offset))
+
 	var users []domain.User
-	err := r.emailDB.Select(&users, "SELECT * FROM users")
+	query := "SELECT * FROM users LIMIT $1 OFFSET $2"
+	err := r.emailDB.Select(&users, query, limit, offset)
 	if err != nil {
 		logger.Error("Database error while fetching users", zap.Error(err))
 		return nil, errors.NewUnExpectedError("Unexpected database error")

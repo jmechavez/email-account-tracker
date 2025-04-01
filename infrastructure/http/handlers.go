@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/jmechavez/email-account-tracker/errors"
@@ -24,7 +25,6 @@ type UserHandler struct {
 // }
 
 func (h UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-
 
 	// Only allow PATCH method for updates
 	if r.Method != http.MethodPatch {
@@ -79,7 +79,7 @@ func (h UserHandler) UpdateSurname(w http.ResponseWriter, r *http.Request) {
 
 	// Parse the request body
 	var request dto.UserUpdateSurnameRequest
-		err := json.NewDecoder(r.Body).Decode(&request)
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		writeResponse(w, http.StatusBadRequest, errors.NewBadRequestError("Invalid request body"))
 		return
@@ -114,14 +114,36 @@ func (h UserHandler) IdNo(w http.ResponseWriter, r *http.Request) {
 		writeResponse(w, http.StatusOK, user)
 		return
 	}
-	{
-		users, err := h.service.Users()
-		if err != nil {
-			writeResponse(w, err.Code, err.AsMessage())
-			return
+
+	// Default values for pagination
+	limit := 10
+	offset := 0
+
+	// Parse limit from query parameter if provided
+	limitStr := r.URL.Query().Get("limit")
+	if limitStr != "" {
+		parsedLimit, err := strconv.Atoi(limitStr)
+		if err == nil && parsedLimit > 0 {
+			limit = parsedLimit
 		}
-		writeResponse(w, http.StatusOK, users)
 	}
+
+	// Parse offset from query parameter if provided
+	offsetStr := r.URL.Query().Get("offset")
+	if offsetStr != "" {
+		parsedOffset, err := strconv.Atoi(offsetStr)
+		if err == nil && parsedOffset >= 0 {
+			offset = parsedOffset
+		}
+	}
+
+	// Call the service method with pagination parameters
+	users, err := h.service.Users(limit, offset)
+	if err != nil {
+		writeResponse(w, err.Code, err.AsMessage())
+		return
+	}
+	writeResponse(w, http.StatusOK, users)
 }
 
 func (h UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
