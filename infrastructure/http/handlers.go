@@ -15,6 +15,9 @@ type UserHandler struct {
 	service services.UserService
 }
 
+type UserAuthHandler struct {
+	service services.UserAuthService
+}
 // func (h UserHandler) Users(w http.ResponseWriter, r *http.Request) {
 // 	users, err := h.service.Users()
 // 	if err != nil {
@@ -23,6 +26,44 @@ type UserHandler struct {
 // 	}
 // 	writeResponse(w, http.StatusOK, users)
 // }
+
+func (h UserAuthHandler) CreatePassword(w http.ResponseWriter, r *http.Request) {
+	// Only allow POST method for creating password
+	if r.Method != http.MethodPost {
+		writeResponse(w, http.StatusMethodNotAllowed, errors.NewMethodNotAllowedError("Method not allowed"))
+		return
+	}
+
+	// Extract IdNo from URL path
+	vars := mux.Vars(r)
+	idNo := vars["id_no"]
+	if idNo == "" {
+		writeResponse(w, http.StatusBadRequest, errors.NewBadRequestError("ID number is required in the URL"))
+		return
+	}
+
+	// Parse the request body
+	var request dto.UserPassCreateRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		writeResponse(w, http.StatusBadRequest, errors.NewBadRequestError("Invalid request body"))
+		return
+	}
+
+	// Assign the extracted IdNo to the request object
+	request.IdNo = idNo
+
+	// Call the service to create password
+	response, appError := h.service.CreatePassword(request)
+	if appError != nil {
+		writeResponse(w, appError.Code, appError)
+		return
+	}
+
+	// Return success response
+	writeResponse(w, http.StatusOK, response)
+}
+
 
 func (h UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 

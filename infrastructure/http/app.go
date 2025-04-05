@@ -19,6 +19,10 @@ func Start() {
 	router := mux.NewRouter()
 	dbUser := getPostgresDB()
 
+	uah := UserAuthHandler{
+		services.NewUserAuthService(db.NewUserAuthRepositoryDb(dbUser)),
+	}
+
 	uh := UserHandler{
 		services.NewUserService(db.NewUserRepositoryDb(dbUser)),
 	}
@@ -28,6 +32,7 @@ func Start() {
 	router.HandleFunc("/users/{id_no}", uh.DeleteUser).Methods(http.MethodDelete)
 	router.HandleFunc("/users/{id_no}", uh.UpdateUser).Methods(http.MethodPatch)
 	router.HandleFunc("/users/{id_no}/surname", uh.UpdateSurname).Methods(http.MethodPatch)
+	router.HandleFunc("/users/{id_no}/password", uah.CreatePassword).Methods(http.MethodPost)
 
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),

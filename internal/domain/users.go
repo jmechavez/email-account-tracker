@@ -110,7 +110,7 @@ func (u User) ToUpdateSurnameDto() dto.UserUpdateSurnameResponse {
 		IdNo:      u.IdNo,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
-		Email:    u.Email,
+		Email:     u.Email,
 	}
 }
 
@@ -147,4 +147,8 @@ type UserRepository interface {
 	DeleteUser(User) (*UserDeleteReturn, *errors.AppError)
 	UpdateUser(User) (*User, *errors.AppError)
 	UpdateSurname(User) (*User, *errors.AppError)
+}
+
+type UserAuthRepository interface {
+	CreatePassword(User) (*User, *errors.AppError)
 }
