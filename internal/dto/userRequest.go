@@ -43,6 +43,13 @@ type UserUpdateRequest struct {
 	UpdatedBy       string `json:"updated_by" db:"updated_by"`
 }
 
+type UserPassCreateRequest struct {
+	IdNo           string `json:"id_no" db:"id_no"`
+	Password       string `json:"password"`
+	HashedPassword string `json:"hashed_password" db:"hashed_password"`
+	Salt           string `json:"salt" db:"salt"`
+}
+
 // func (r UserEmailRequest) Validate() *errors.AppError {
 // 	if r.EmailAction != "save" {
 // 		return errors.NewValidationError("User action failed")

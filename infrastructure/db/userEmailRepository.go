@@ -196,6 +196,7 @@ func (r UserEmailRepository) UpdateSurname(user domain.User) (*domain.User, *err
 	return &updatedUser, nil
 }
 
+
 func NewUserRepositoryDb(db *sqlx.DB) UserEmailRepository {
 	logger.Info("Initializing UserEmailRepository")
 	return UserEmailRepository{db}

@@ -88,3 +88,9 @@ type UserUpdateSurnameResponse struct {
 	Suffix          string `json:"suffix,omitempty"`
 	Email           string `json:"email"`
 }
+
+type UserPassCreateResponse struct {
+	IdNo		   string `json:"id_no"`
+	HashedPassword string `json:"hashed_password"`
+	Salt           string `json:"salt"`
+}

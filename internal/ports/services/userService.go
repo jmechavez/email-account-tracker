@@ -235,6 +235,7 @@ func (s DefaultUserService) generateEmail(firstName, lastName, suffix string) (s
 	return email, nil
 }
 
+
 func NewUserService(repository domain.UserRepository) DefaultUserService {
 	return DefaultUserService{repository}
 }

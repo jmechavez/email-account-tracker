@@ -14,4 +14,5 @@ require (
 	github.com/gorilla/handlers v1.5.2
 	github.com/lib/pq v1.10.9
 	go.uber.org/multierr v1.10.0 // indirect
+	golang.org/x/crypto v0.36.0
 )
