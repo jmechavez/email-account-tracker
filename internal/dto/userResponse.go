@@ -82,15 +82,20 @@ type UserUpdateResponse struct {
 }
 
 type UserUpdateSurnameResponse struct {
-	IdNo            string `json:"id_no"`
-	FirstName       string `json:"first_name"`
-	LastName        string `json:"last_name"`
-	Suffix          string `json:"suffix,omitempty"`
-	Email           string `json:"email"`
+	IdNo      string `json:"id_no"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Suffix    string `json:"suffix,omitempty"`
+	Email     string `json:"email"`
 }
 
 type UserPassCreateResponse struct {
-	IdNo		   string `json:"id_no"`
+	IdNo           string `json:"id_no"`
 	HashedPassword string `json:"hashed_password"`
 	Salt           string `json:"salt"`
+}
+
+type UserPassLoginResponse struct {
+	IdNo           string `json:"id_no"`
+	FirstName      string `json:"first_name"`
 }

@@ -18,6 +18,7 @@ type UserHandler struct {
 type UserAuthHandler struct {
 	service services.UserAuthService
 }
+
 // func (h UserHandler) Users(w http.ResponseWriter, r *http.Request) {
 // 	users, err := h.service.Users()
 // 	if err != nil {
@@ -63,7 +64,6 @@ func (h UserAuthHandler) CreatePassword(w http.ResponseWriter, r *http.Request) 
 	// Return success response
 	writeResponse(w, http.StatusOK, response)
 }
-
 
 func (h UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
@@ -223,6 +223,26 @@ func (h UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		}
 		writeResponse(w, http.StatusCreated, user)
 	}
+}
+
+func (h UserAuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idNo := vars["id_no"]
+	var req dto.UserPassLoginRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		writeResponse(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	} else {
+		req.IdNo = idNo
+		user, err := h.service.Login(req)
+		if err != nil {
+			writeResponse(w, err.Code, err.AsMessage())
+			return
+		}
+		writeResponse(w, http.StatusOK, user)
+	}
+
 }
 
 func writeResponse(w http.ResponseWriter, code int, data interface{}) {

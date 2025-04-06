@@ -43,6 +43,7 @@ func Start() {
 	router.HandleFunc("/users/{id_no}", uh.UpdateUser).Methods(http.MethodPatch)              // Update user details
 	router.HandleFunc("/users/{id_no}/surname", uh.UpdateSurname).Methods(http.MethodPatch)   // Update user surname
 	router.HandleFunc("/users/{id_no}/password", uah.CreatePassword).Methods(http.MethodPost) // Create or update user password
+	router.HandleFunc("/users/{id_no}/login", uah.Login).Methods(http.MethodPost)
 
 	// Configure CORS to allow cross-origin requests
 	corsHandler := handlers.CORS(

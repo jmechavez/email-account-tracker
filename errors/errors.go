@@ -1,6 +1,8 @@
 package errors
 
-import "net/http"
+import (
+	"net/http"
+)
 
 type AppError struct {
 	Code    int    `json:"code,omitempty"`

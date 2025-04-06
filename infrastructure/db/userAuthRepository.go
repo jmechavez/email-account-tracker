@@ -13,6 +13,34 @@ type UserAuthRepository struct {
 	emailDB *sqlx.DB
 }
 
+func (r UserAuthRepository) Login(user domain.User) (*domain.User, *errors.AppError) {
+	loginSql := `
+		SELECT * FROM users
+		WHERE id_no = :id_no
+		AND hashed_password = :hashed_password
+		AND salt = :salt
+	`
+	rows, err := r.emailDB.NamedQuery(loginSql, user)
+	if err != nil {
+		logger.Error("Error while logging in", zap.Error(err))
+		return nil, errors.NewUnExpectedError("Unexpected database error")
+	}
+	defer rows.Close()
+	var loggedInUser domain.User
+	if rows.Next() {
+		err = rows.StructScan(&loggedInUser)
+		if err != nil {
+			logger.Error("Error scanning logged-in user", zap.Error(err))
+			return nil, errors.NewUnExpectedError("Unexpected database error")
+		}
+	} else {
+		logger.Error("No rows returned after login")
+		return nil, errors.NewBadRequestError("Invalid login credentials")
+	}
+	logger.Info("User login success", zap.String("id_no", loggedInUser.IdNo))
+	return &loggedInUser, nil
+}
+
 func (r UserAuthRepository) CreatePassword(user domain.User) (*domain.User, *errors.AppError) {
 	passwordUserSql := `
 		UPDATE users

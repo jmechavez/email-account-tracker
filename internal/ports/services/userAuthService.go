@@ -2,19 +2,20 @@ package services
 
 import (
 	"crypto/rand"
+	"crypto/sha512"
 	"encoding/base64"
 	"log"
 
 	"github.com/jmechavez/email-account-tracker/errors"
 	"github.com/jmechavez/email-account-tracker/internal/domain"
 	"github.com/jmechavez/email-account-tracker/internal/dto"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // UserAuthService defines the interface for user authentication services
 type UserAuthService interface {
 	// CreatePassword creates a hashed password for a user
 	CreatePassword(user dto.UserPassCreateRequest) (*dto.UserPassCreateResponse, *errors.AppError)
+	Login(user dto.UserPassLoginRequest) (*dto.UserPassLoginResponse, *errors.AppError)
 }
 
 // DefaultUserAuthService is the default implementation of UserAuthService
@@ -23,9 +24,44 @@ type DefaultUserAuthService struct {
 	urepo domain.UserRepository     // Repository for user data
 }
 
+// Validate the password
+func (s DefaultUserAuthService) Login(req dto.UserPassLoginRequest) (*dto.UserPassLoginResponse, *errors.AppError) {
+	// You're missing the code to fetch the user
+	existingUser, err := s.urepo.IdNo(req.IdNo)
+	if err != nil {
+		return nil, errors.NewUnExpectedError("Error fetching user")
+	}
+
+	if req.Password == "" {
+		return nil, errors.NewBadRequestError("Password cannot be empty")
+	}
+	if len(req.Password) < 8 {
+		return nil, errors.NewBadRequestError("Password must be at least 8 characters long")
+	}
+
+	// Hash the provided password with the stored salt
+	hashedPassword, err := s.GenerateHashedPassword(req.Password, existingUser.Salt)
+	if err != nil {
+		return nil, errors.NewUnExpectedError("Error hashing password")
+	}
+
+	// Compare the hashes
+	if hashedPassword != existingUser.HashedPassword {
+		return nil, errors.NewAuthorizationError("Invalid credentials")
+	}
+
+	log.Printf("User with ID %s successfully logged in", req.IdNo)
+
+	response := &dto.UserPassLoginResponse{
+		IdNo:      existingUser.IdNo,
+		FirstName: existingUser.FirstName,
+	}
+
+	return response, nil
+}
+
 // CreatePassword creates a hashed password for a user
 func (s DefaultUserAuthService) CreatePassword(req dto.UserPassCreateRequest) (*dto.UserPassCreateResponse, *errors.AppError) {
-
 	// Fetch the user by ID number
 	existingUser, err := s.urepo.IdNo(req.IdNo)
 	if err != nil {
@@ -45,14 +81,14 @@ func (s DefaultUserAuthService) CreatePassword(req dto.UserPassCreateRequest) (*
 		return nil, errors.NewBadRequestError("Password must be at least 8 characters long")
 	}
 
-	// Generate a hashed password
-	hashedPassword, err := s.GenerateHashedPassword(req.Password)
+	// Generate a random salt
+	salt, err := s.GenerateSalt()
 	if err != nil {
 		return nil, err
 	}
 
-	// Generate a random salt
-	salt, err := s.GenerateSalt()
+	// Generate a hashed password with the salt
+	hashedPassword, err := s.GenerateHashedPassword(req.Password, salt)
 	if err != nil {
 		return nil, err
 	}
@@ -83,38 +119,30 @@ func (s DefaultUserAuthService) CreatePassword(req dto.UserPassCreateRequest) (*
 	return response, nil
 }
 
-// GenerateHashedPassword generates a hashed password using bcrypt
-func (s DefaultUserAuthService) GenerateHashedPassword(password string) (string, *errors.AppError) {
-
-	// Validate the password
-	if password == "" {
-		return "", errors.NewBadRequestError("Password cannot be empty")
-	}
-	if len(password) < 8 {
-		return "", errors.NewBadRequestError("Password must be at least 8 characters long")
-	}
-
-	// Generate the hashed password
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", errors.NewUnExpectedError("Error generating hashed password")
-	}
-	return string(bytes), nil
-}
-
-// GenerateSalt generates a random salt for password hashing
+// GenerateSalt generates a random salt
 func (s DefaultUserAuthService) GenerateSalt() (string, *errors.AppError) {
-	// Create a byte slice for the salt
-	salt := make([]byte, 16)
-
-	// Generate random bytes for the salt
+	salt := make([]byte, 32) // 32 bytes salt
 	_, err := rand.Read(salt)
 	if err != nil {
 		return "", errors.NewUnExpectedError("Error generating salt")
 	}
-
-	// Convert the salt to a base64-encoded string for safe storage
 	return base64.StdEncoding.EncodeToString(salt), nil
+}
+
+// GenerateHashedPassword generates a hashed password using the provided salt
+func (s DefaultUserAuthService) GenerateHashedPassword(password string, salt string) (string, *errors.AppError) {
+	// Combine password with salt
+	saltedPassword := password + salt
+
+	// Use a strong hashing algorithm (here using SHA-512)
+	hash := sha512.New()
+	_, err := hash.Write([]byte(saltedPassword))
+	if err != nil {
+		return "", errors.NewUnExpectedError("Error hashing password")
+	}
+
+	hashedBytes := hash.Sum(nil)
+	return base64.StdEncoding.EncodeToString(hashedBytes), nil
 }
 
 // NewUserAuthService creates a new instance of DefaultUserAuthService

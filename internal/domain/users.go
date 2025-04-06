@@ -151,4 +151,5 @@ type UserRepository interface {
 
 type UserAuthRepository interface {
 	CreatePassword(User) (*User, *errors.AppError)
+	Login(User) (*User, *errors.AppError)
 }
